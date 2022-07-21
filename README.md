@@ -1,18 +1,18 @@
 ## Implementation Thoughts
 
-Initial Flow:
+Functionality With Old Client:
 1. Client displays a web page to the user
 2. User clicks `Sign in with IdP X`
 3. Client sends an authorization redirect string to user's browser
 
-Exchange Flow:
+New Exchange Flow:
 1. Client consumes the callback
 2. Passes the code verifier back to get the auth token
 3. Call the `user-info` endpoint using the token
 
 What other functionality is needed?
 * Refresh Tokens? 
-* Idp endpoint discovery?
+* Idp endpoint discovery? -- DONE
 
 ## Library Documentation Notes
 
