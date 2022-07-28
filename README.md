@@ -14,6 +14,9 @@ What other functionality is needed?
 * Refresh Tokens? 
 * Idp endpoint discovery? -- DONE
 
+Need to wrap this whole thing into a web server, will do that using expressJS
+
+
 ## Library Documentation Notes
 
 Abstract Control Flow Steps:
@@ -28,3 +31,8 @@ Abstract Control Flow Steps:
 ## Passport
 
 Authentication middleware for node.js applications
+
+## Koa-EJS
+
+* Accessing the request: `ctx.request`
+* 
