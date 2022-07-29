@@ -1,3 +1,13 @@
+# Test OIDC Client
+
+Simple OIDC Client - press the login button to be redirected to an OIDC Provider.
+If the authentication is successful, the client will display a "YOU MAY PASS" message.
+
+To run the app:
+* `npm init`
+* `npm run-script client`
+
+
 ## Implementation Thoughts
 
 Functionality With Old Client:
@@ -21,8 +31,12 @@ Need to wrap this whole thing into a web server, will do that using expressJS
 
 Abstract Control Flow Steps:
 * Create an Issuer with metadata parameters (can use a .well-known endpoint to do this)
-* Create a client object using the `issuer.Client` method
-
+* Create a client object using the `issuer.Client` method (including a callback uri)
+* Create a code verifier (`generators.codeVerifier()`) and a challenge (`generators.codeChallenge(code_verifier)`)
+* Initiate the oidc flow by crafting a 302 redirect for the browser that takes them to the IdP -- `client.authorizationUrl(scope, code_verifier, code_challenge)`
+* Wait for an authentication response at the callback uri endpoint
+* Extract the authentication response parameters from the response -- `client.callbackParams(req)`
+* Exchange for token using `client.callback(callback_uri, parameters, {code_verifier})`
 
 
 ### Client Callback
@@ -35,4 +49,5 @@ Authentication middleware for node.js applications
 ## Koa-EJS
 
 * Accessing the request: `ctx.request`
-* 
+
+

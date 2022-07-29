@@ -1,33 +1,40 @@
 const { Issuer, generators } = require('openid-client');
-
-
-const express = require('express');
+const axios = require('axios');
 
 // OIDC Client Functionality
-async function establishOIDCClient() {
-    const localIssuer = await Issuer.discover('http://localhost:3333/.well-known/openid-configuration');
-    console.log('Discovered issuer %s %O', localIssuer, localIssuer.metadata);
+let localIssuer;
+let client;
+let code_verifier;
+let code_challenge;
+let redirect_uri = 'http://localhost:4444/callback';
 
-    let redirectUri = 'http:/localhost:4444/callback';
-    const client = new localIssuer.Client({
+async function establishOIDCClient() {
+    localIssuer = await Issuer.discover('http://localhost:3333/.well-known/openid-configuration');
+    // console.log('Discovered issuer %s %O', localIssuer, localIssuer.metadata);
+
+    client = new localIssuer.Client({
         client_id: 'localClient',
         client_secret: 'TQV5U29k1gHibH5bx1layBo0OSAvAbRT3UYW3EWrSYBB5swxjVfWUa1BS8lqzxG/0v9wruMcrGadany3',
-        redirect_uris: [redirectUri],
+        redirect_uris: [redirect_uri],
         response_types: ['code']
     });
 
     // Random nonce generated to protect against replays
-    const code_verifier = generators.codeVerifier();
-    const code_challenge = generators.codeChallenge(code_verifier);
+    code_verifier = generators.codeVerifier();
+    code_challenge = generators.codeChallenge(code_verifier);
 
-    console.log (
-        client.authorizationUrl({
-            scope: 'openid',
-            code_challenge,
-            code_challenge_method: 'S256',
-        })
-    );
+    // nonce is needed to prevent a race condition
+    // we don't want the IdP to create a dummy user-agent and create a successful auth flow in the middle of this one
 }
+
+function getAuthRedirectUrl() {
+    return client.authorizationUrl({
+        scope: 'openid',
+        code_challenge,
+        code_challenge_method: 'S256'
+    })
+}
+
 
 
 
@@ -40,7 +47,6 @@ async function establishOIDCClient() {
 
 
 // Web Server Functionality
-
 const koa = require("koa");
 const path = require("path");
 const render = require("koa-ejs");
@@ -56,30 +62,28 @@ render(app, {
     viewExt: "html"
 });
 
-router.get("hello", "/", (ctx) => {
-    establishOIDCClient();
-    ctx.body = "<h1>Hello World!!</h1>";
+router.get("root", "/", (ctx) => {
+    return ctx.render("index", {});
+});
+
+router.get("authInitiate", "/authenticate", async (ctx) => {
+    await establishOIDCClient();
+    let authRedirectUrl = getAuthRedirectUrl();
+    console.log(authRedirectUrl + "\n");
+    ctx.response.status = 302;
+    ctx.response.set('Location', authRedirectUrl);
+});
+
+router.get("authCallback", "/callback", async (ctx) => {
+    const params = client.callbackParams(ctx.req);
+    console.log(params);
+    console.log("\n");
+    const tokenSet = await client.callback(redirect_uri, params, {code_verifier});
+    console.log('received and validated tokens %j \n', tokenSet);
+    console.log('validated ID Token claims %j \n', tokenSet.claims());
+    ctx.response.status = 200;
 });
 
 app.use(router.routes()).use(router.allowedMethods());
 const PORT = process.env.PORT || 4444;
 app.listen(PORT, () => console.log(`running on port ${PORT}`));
-
-
-
-
-
-
-
-
-// const app = express();
-// const port = 4444;
-
-// app.get('/', (req, res) => {
-//     establishOIDCClient();
-//     res.send('Hello World!');
-// })
-
-// app.listen(port, () => {
-//     console.log(`Example application listening on port ${port}`);
-// })
