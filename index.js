@@ -81,12 +81,8 @@ router.get("authCallback", "/callback", async (ctx) => {
     const tokenSet = await client.callback(redirect_uri, params, {code_verifier});
     console.log('received and validated tokens %j \n', tokenSet);
     console.log('validated ID Token claims %j \n', tokenSet.claims());
-    return ctx.render("success", {});
+    ctx.response.status = 200;
 });
-
-router.get("successCallback", "/success", (ctx) => {
-    return ctx.render("success", {});
-})
 
 app.use(router.routes()).use(router.allowedMethods());
 const PORT = process.env.PORT || 4444;
