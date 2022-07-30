@@ -35,10 +35,6 @@ function getAuthRedirectUrl() {
     })
 }
 
-
-
-
-
 // const params = client.callbackParams(req);
 // const tokenSet = await client.callback(redirectUri, params, { code_verifier });
 // console.log("Received the token!");
@@ -78,10 +74,14 @@ router.get("authCallback", "/callback", async (ctx) => {
     const params = client.callbackParams(ctx.req);
     console.log(params);
     console.log("\n");
+
     const tokenSet = await client.callback(redirect_uri, params, {code_verifier});
     console.log('received and validated tokens %j \n', tokenSet);
     console.log('validated ID Token claims %j \n', tokenSet.claims());
+
+    const username = tokenSet.claims().sub;
     ctx.response.status = 200;
+    ctx.body = `<center><h2 style="color:green">Welcome ${username}</h2><center>`;
 });
 
 app.use(router.routes()).use(router.allowedMethods());
